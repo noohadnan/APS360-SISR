@@ -29,7 +29,7 @@ def bicubic_interpolate_2d(image: torch.Tensor, new_height: int, new_width: int)
 
 if __name__ == '__main__':
     # --- Load the high-resolution image ---
-    img_path = "SampleData/sample.jpg"  
+    img_path = "output_images/downtown_toronto_blur_compress.jpg"  
     pil_image = Image.open(img_path).convert('L')  
     original_np = np.array(pil_image)
     
