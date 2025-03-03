@@ -4,7 +4,7 @@ from PIL import Image
 from noise import pnoise2
 import metrics
 
-def apply_gaussian_blur(image, kernel_size=7):
+def apply_gaussian_blur(image, kernel_size=11):
     """Applies Gaussian blur to the entire image."""
     return cv2.GaussianBlur(image, (kernel_size, kernel_size), 0)
 
@@ -20,7 +20,7 @@ def generate_perlin_noise(image_shape, scale=10):
     noise_map = (noise_map - noise_map.min()) / (noise_map.max() - noise_map.min())
     return noise_map
 
-def apply_perlin_blur(image, perlin_scale=10, max_kernel_size=9):
+def apply_perlin_blur(image, perlin_scale=5, max_kernel_size=11):
     """Applies Perlin noise-based variable blurring in patches instead of per pixel."""
     perlin_mask = generate_perlin_noise(image.shape, scale=perlin_scale)
 
@@ -39,7 +39,7 @@ def apply_perlin_blur(image, perlin_scale=10, max_kernel_size=9):
 
     return blurred_image
 
-def downscale_then_upscale(image, scale_factor=16):
+def downscale_then_upscale(image, scale_factor=4):
     """Simulates resolution loss by downscaling and upscaling the image."""
     height, width = image.shape[:2]
     new_size = (width // scale_factor, height // scale_factor)
@@ -52,7 +52,7 @@ def downscale_then_upscale(image, scale_factor=16):
     
     return restored
 
-def process_image(image_path, mode="none", scale_factor=4):
+def process_image(image_path, mode="none", scale_factor=32):
     """
     Process the image with the specified mode:
     - "none": No blur, just downscale-upscale
@@ -79,28 +79,3 @@ def process_image(image_path, mode="none", scale_factor=4):
     image = downscale_then_upscale(image, scale_factor)
 
     return Image.fromarray(image)
-
-if __name__ == "__main__":
-    input_image = "downtown_toronto.jpg" # change this to the image you want to process
-    mode = "both"  # options to run: "none", "gaussian", "perlin", "both", but just run "both" for this project
-    output = process_image("data_images/" + input_image, mode)
-
-    if output:
-        output.save("output_images/" + input_image[:-4] + "_blur_compress.jpg", quality=10)
-
-    original_image = cv2.imread("data_images/" + input_image)
-    processed_image = cv2.imread("output_images/" + input_image[:-4] + "_blur_compress.jpg")
-
-    original_image = original_image.astype(np.float32) / 255.0
-    processed_image = processed_image.astype(np.float32) / 255.0
-
-    processed_image = cv2.resize(processed_image, (original_image.shape[1], original_image.shape[0]))
-
-    psnr = metrics.calculate_psnr(original_image, processed_image)
-    print(f"PSNR: {psnr:.2f} dB")
-
-    gray_original = cv2.cvtColor((original_image * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
-    gray_processed = cv2.cvtColor((processed_image * 255).astype(np.uint8), cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
-
-    ssim_value = np.array(metrics.calculate_ssim(gray_original, gray_processed), dtype=np.float32)
-    print(f"SSIM: {ssim_value:.4f}")

@@ -25,3 +25,10 @@ venv/
 logs/
 *.log
 *.tmp
+
+# Ignore entire extracted_frames directory
+extracted_frames/
+
+# Ignore everything inside action_camera except image_metrics.csv
+action_camera/*
+!action_camera/image_metrics.csv
