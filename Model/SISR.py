@@ -68,6 +68,7 @@ class TrainableDataset(Dataset):
         return original_image, processed_image
 
 
+# get_model_name adapted from APS360 Lab 2
 def get_model_name(name, batch_size, learning_rate, epoch):
     path = "./model_savepoint/model_{0}_bs{1}_lr{2}_epoch{3}".format(name,
                                                    batch_size,
@@ -75,19 +76,11 @@ def get_model_name(name, batch_size, learning_rate, epoch):
                                                    epoch)
     return path
 
+# plot_training_curve adapted from APS360 Lab 2
 def plot_training_curve(path):
-    # train_err = np.loadtxt("{}_train_acc.csv".format(path))
-    # val_err = np.loadtxt("{}_val_acc.csv".format(path))
     train_loss = np.loadtxt("{}_train_loss.csv".format(path))
     val_loss = np.loadtxt("{}_val_loss.csv".format(path))
-    # plt.title("Train vs Validation Accuracy")
     n = len(train_loss) # number of epochs
-    # plt.plot(range(1,n+1), train_err, label="Train")
-    # plt.plot(range(1,n+1), val_err, label="Validation")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Accuracy")
-    # plt.legend(loc='best')
-    # plt.show()
     plt.title("Train vs Validation Loss")
     plt.plot(range(1,n+1), train_loss, label="Train")
     plt.plot(range(1,n+1), val_loss, label="Validation")
@@ -150,6 +143,7 @@ class SISR(nn.Module):
 '''
 enableCuda = True
 
+# getLossAcc written by Michael Del Duca for Lab 3, adapted for use here
 def getLossAcc(model, criterion, dataLoader, batchSize):
     
   runningLoss = 0.0
@@ -175,7 +169,7 @@ def getLossAcc(model, criterion, dataLoader, batchSize):
 
   return avgLoss
 
-
+# trainNet written by Michael Del Duca for Lab 3, adapted for use here
 def trainNet(model, data, validationData, batchSize=32, learningRate=0.005, numEpochs=4, getVal=True, saveCheckpoints=True):
   model.train()
 
