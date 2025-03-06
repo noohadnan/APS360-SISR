@@ -4,7 +4,7 @@ from PIL import Image
 from noise import pnoise2
 import metrics
 
-def apply_gaussian_blur(image, kernel_size=11):
+def apply_gaussian_blur(image, kernel_size=21):
     """Applies Gaussian blur to the entire image."""
     return cv2.GaussianBlur(image, (kernel_size, kernel_size), 0)
 
@@ -20,7 +20,7 @@ def generate_perlin_noise(image_shape, scale=10):
     noise_map = (noise_map - noise_map.min()) / (noise_map.max() - noise_map.min())
     return noise_map
 
-def apply_perlin_blur(image, perlin_scale=5, max_kernel_size=11):
+def apply_perlin_blur(image, perlin_scale=5, max_kernel_size=21):
     """Applies Perlin noise-based variable blurring in patches instead of per pixel."""
     perlin_mask = generate_perlin_noise(image.shape, scale=perlin_scale)
 
