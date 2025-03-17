@@ -39,7 +39,7 @@ if __name__ == '__main__':
     try:
         fn = args[0]
     except:
-        fn = 'SampleData/text.jpg'
+        fn = '/Users/noohadnan/Desktop/APS360/APS360-SISR/data_images/procepoch39_image0.jpg'
 
     win = 'deconvolution'
 
@@ -142,6 +142,8 @@ if __name__ == '__main__':
     while True:
         ch = cv2.waitKey() & 0xFF
         if ch == 27:  # ESC key to exit
+            #save the display image
+            
             break
         if ch == ord(' '):
             defocus = not defocus

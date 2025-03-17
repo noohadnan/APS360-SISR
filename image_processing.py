@@ -75,7 +75,8 @@ def process_image(image_path, mode="none", scale_factor=32):
     elif mode == "both":
         image = apply_gaussian_blur(image)
         image = apply_perlin_blur(image)
-
+    elif mode == "no":
+        return Image.fromarray(image) # No blur
     image = downscale_then_upscale(image, scale_factor)
 
     return Image.fromarray(image)
