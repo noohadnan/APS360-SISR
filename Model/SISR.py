@@ -258,19 +258,32 @@ if __name__ == "__main__":
                 [transforms.ToTensor(),
                 transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))]
                 )
-                
-    dataset = TrainableDataset("D:", ["book_vids"], transform)
-    dataset.generateDatapairs()
 
-    trainSize = round(0.7 * len(dataset.dataPairs))
-    valSize = round(0.15 * len(dataset.dataPairs))
-    testSize = len(dataset.dataPairs) - trainSize - valSize
+### Comment out this block 
 
-    trainSet, valSet, testSet = random_split(dataset, [trainSize, valSize, testSize])
+              
+    #dataset = TrainableDataset("D:", ["book_vids"], transform)
+    #dataset.generateDatapairs()
+
+    #trainSize = round(0.7 * len(dataset.dataPairs))
+    #valSize = round(0.15 * len(dataset.dataPairs))
+    #testSize = len(dataset.dataPairs) - trainSize - valSize
+
+    #trainSet, valSet, testSet = random_split(dataset, [trainSize, valSize, testSize])
 
     # dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
 
+####
 
+        # Load datasets from pre-split directories
+    train_dataset = TrainableDataset("Dataset/train", [""], transform)
+    train_dataset.generateDatapairs()
+
+    val_dataset = TrainableDataset("Dataset/validation", [""], transform)
+    val_dataset.generateDatapairs()
+
+    test_dataset = TrainableDataset("Dataset/test", [""], transform)
+    test_dataset.generateDatapairs()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using {device} device")
@@ -286,8 +299,8 @@ if __name__ == "__main__":
 
     trainNet(
         SISRModel, 
-        trainSet, 
-        valSet,
+        train_dataset, 
+        val_dataset,
         batchSize=8,
         learningRate=5e-3,
         numEpochs=40,
