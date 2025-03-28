@@ -4,6 +4,7 @@ import PIL.Image
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+torch.backends.cudnn.benchmark = True
 
 import torch.nn.functional as F
 import torch.optim as optim
@@ -176,8 +177,10 @@ def trainNet(model, data, validationData, batchSize=32, learningRate=0.005, numE
   criterion = nn.MSELoss()
   optimizer = optim.SGD(model.parameters(), lr=learningRate, momentum=0.9)
 
-  trainLoader = DataLoader(dataset=data, batch_size=batchSize, shuffle=False, collate_fn=collate_fn )
-  valLoader = DataLoader(dataset=validationData, batch_size=batchSize, shuffle=False, collate_fn=collate_fn )
+  trainLoader = DataLoader(dataset=data, batch_size=batchSize, shuffle=False, 
+                            collate_fn=collate_fn, num_workers=8, pin_memory=True, persistent_workers=True)
+  valLoader = DataLoader(dataset=validationData, batch_size=batchSize, shuffle=False, 
+                        collate_fn=collate_fn, num_workers=8, pin_memory=True, persistent_workers=True)
 
   trainLossArr = np.zeros(numEpochs)
   iterationsArr = np.zeros(numEpochs)
@@ -276,11 +279,21 @@ if __name__ == "__main__":
 ####
 
         # Load datasets from pre-split directories
+
+
     train_dataset = TrainableDataset("Dataset/train", [""], transform)
     train_dataset.generateDatapairs()
 
+        # Reduce size to 50%
+    half_size = len(train_dataset) // 2
+    train_dataset, _ = random_split(train_dataset, [half_size, len(train_dataset) - half_size])
+
     val_dataset = TrainableDataset("Dataset/validation", [""], transform)
     val_dataset.generateDatapairs()
+
+    # Reduce size to 50%
+    half_size = len(val_dataset) // 2
+    val_dataset, _ = random_split(val_dataset, [half_size, len(val_dataset) - half_size])
 
     test_dataset = TrainableDataset("Dataset/test", [""], transform)
     test_dataset.generateDatapairs()
