@@ -1,5 +1,5 @@
 from torchvision import datasets, transforms
-from SISR import enableCuda, SISR, get_model_name, plot_training_curve, saveBatchOutput
+from Archive.SISR import enableCuda, SISR, get_model_name, plot_training_curve, saveBatchOutput
 import torch
 import PIL
 import PIL.Image
@@ -39,4 +39,4 @@ unnormalize = new
 new = (new * 0.5 + 0.5)
 new = new.unsqueeze(0)
 
-saveBatchOutput(new, "new/epoch_new_data/output", "output", 1)
+saveBatchOutput(new, "new/epoch_new_data/output", "output", 5)

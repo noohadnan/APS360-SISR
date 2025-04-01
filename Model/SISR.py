@@ -35,14 +35,11 @@ from torch.utils.tensorboard import SummaryWriter
 ===============================================================================================
 '''
 class TrainableDataset(Dataset):
-    def __init__(self, basedir, dirs: list, transform, patch_size=96, stride=48):
+    def __init__(self, basedir, dirs: list, transform):
         self.basedir = basedir
         self.dirs = dirs
         self.dataPairs = []
         self.transform = transform
-        self.patch_size = patch_size
-        self.stride = stride
-
 
 
 
@@ -58,15 +55,6 @@ class TrainableDataset(Dataset):
                      os.path.join(procPath, str(fileNum + 1) + ".jpg"))
                      )
     
-    def extract_patches(self, image):
-        patches = []
-        _, h, w = image.shape
-        for i in range(0, h - self.patch_size + 1, self.stride):
-            for j in range(0, w - self.patch_size + 1, self.stride):
-                patch = image[:, i:i+self.patch_size, j:j+self.patch_size]
-                patches.append(patch)
-        return patches
-
     def __len__(self):
         return len(self.dataPairs)
     
@@ -78,10 +66,7 @@ class TrainableDataset(Dataset):
             original_image = self.transform(original_image)
             processed_image = self.transform(processed_image)
 
-        orig_patches = self.extract_patches(original_image)
-        proc_patches = self.extract_patches(processed_image)
-
-        return orig_patches, proc_patches
+        return original_image, processed_image
 
 
 # get_model_name adapted from APS360 Lab 2
@@ -105,6 +90,11 @@ def plot_training_curve(path):
     plt.legend(loc='best')
     plt.show()
 
+def unnormalize_image(img):
+    # Inverse of mean=0.5, std=0.5
+    # img_out = img * std + mean = img * 0.5 + 0.5
+    return img * 0.5 + 0.5
+
 def saveBatchOutput(inputTensor: torch.Tensor, path: str, fileNames: str, epoch: int):
     
     try:
@@ -115,28 +105,21 @@ def saveBatchOutput(inputTensor: torch.Tensor, path: str, fileNames: str, epoch:
 
     for i, img in enumerate(inputTensor):
         img.cpu()
+        img = unnormalize_image(img)
+        img = torch.clamp(img, 0, 1)
         name = fileNames + f"epoch{epoch}_image{i}.jpg"
         torchvision.utils.save_image(img, os.path.join(path, name))
         print("Saved " + name)
 
-#def collate_fn(batch):
-#    max_height = max(max(orig.shape[1], proc.shape[1]) for orig, proc in batch)
-#    max_width = max(max(orig.shape[2], proc.shape[2]) for orig, proc in batch)
-#    pad_batch_orig = [
-#      torchvision.transforms.functional.pad(orig, (0, 0, max_width - orig.shape[2], max_height - orig.shape[1])) for orig, _ in batch]
-#    pad_batch_proc = [
-#      torchvision.transforms.functional.pad(proc, (0, 0, max_width - proc.shape[2], max_height - proc.shape[1])) for _, proc in batch]
-   
-#    return torch.stack(pad_batch_orig), torch.stack(pad_batch_proc)
-
 def collate_fn(batch):
-    orig_patches = []
-    proc_patches = []
-    for orig_list, proc_list in batch:
-        orig_patches.extend(orig_list)
-        proc_patches.extend(proc_list)
-
-    return torch.stack(orig_patches), torch.stack(proc_patches)
+    max_height = max(max(orig.shape[1], proc.shape[1]) for orig, proc in batch)
+    max_width = max(max(orig.shape[2], proc.shape[2]) for orig, proc in batch)
+    pad_batch_orig = [
+      torchvision.transforms.functional.pad(orig, (0, 0, max_width - orig.shape[2], max_height - orig.shape[1])) for orig, _ in batch]
+    pad_batch_proc = [
+      torchvision.transforms.functional.pad(proc, (0, 0, max_width - proc.shape[2], max_height - proc.shape[1])) for _, proc in batch]
+   
+    return torch.stack(pad_batch_orig), torch.stack(pad_batch_proc)
 
 '''
 ===============================================================================================
@@ -256,11 +239,13 @@ def trainNet(model, data, validationData, batchSize=32, learningRate=0.005, numE
      print(f"\n Validation Loss = {valLossArr[n]}\n")
 
     # Save the current model (checkpoint) to a file - Code from lab2
+    #modelPath = get_model_name(model.name, batchSize, learningRate, epoch)
+
     modelPath = get_model_name(model.name, batchSize, learningRate, epoch)
-
-    if saveCheckpoints:
-      torch.save(model.state_dict(), modelPath)
-
+    parent_dir = os.path.dirname(modelPath)
+    if not os.path.exists(parent_dir):
+        os.makedirs(parent_dir)
+    torch.save(model.state_dict(), modelPath)
 
     n += 1
 
@@ -281,8 +266,9 @@ def trainNet(model, data, validationData, batchSize=32, learningRate=0.005, numE
 ===============================================================================================
 '''
 if __name__ == "__main__":
-    transform = transforms.Compose(
-                [transforms.ToTensor(),
+    transform = transforms.Compose([
+                transforms.Resize((1024, 1024)),
+                transforms.ToTensor(),
                 transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))]
                 )
 
@@ -309,14 +295,15 @@ if __name__ == "__main__":
     train_dataset.generateDatapairs()
 
         # Reduce size to 50%
-    half_size = len(train_dataset) // 2
+    half_size = len(train_dataset) // 3
+    print(half_size)
     train_dataset, _ = random_split(train_dataset, [half_size, len(train_dataset) - half_size])
 
     val_dataset = TrainableDataset("/content/extracted_folder/dataset/validation", [""], transform)
     val_dataset.generateDatapairs()
 
     # Reduce size to 50%
-    half_size = len(val_dataset) // 2
+    half_size = len(val_dataset) // 3
     val_dataset, _ = random_split(val_dataset, [half_size, len(val_dataset) - half_size])
 
     test_dataset = TrainableDataset("/content/extracted_folder/dataset/test", [""], transform)
