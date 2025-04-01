@@ -35,19 +35,22 @@ from torch.utils.tensorboard import SummaryWriter
 ===============================================================================================
 '''
 class TrainableDataset(Dataset):
-    def __init__(self, basedir, dirs: list, transform):
+    def __init__(self, basedir, dirs: list, transform, patch_size=96, stride=48):
         self.basedir = basedir
         self.dirs = dirs
         self.dataPairs = []
         self.transform = transform
+        self.patch_size = patch_size
+        self.stride = stride
+
 
 
 
     def generateDatapairs(self):
         
         for dir in self.dirs:
-            origPath = os.path.join(self.basedir, dir, "original_images\\")
-            procPath = os.path.join(self.basedir, dir, "processed_images\\")
+            origPath = os.path.join(self.basedir, dir, "original_images")
+            procPath = os.path.join(self.basedir, dir, "processed_images")
 
             for fileNum in range(len(os.listdir(origPath))):
                 self.dataPairs.append(
@@ -55,6 +58,15 @@ class TrainableDataset(Dataset):
                      os.path.join(procPath, str(fileNum + 1) + ".jpg"))
                      )
     
+    def extract_patches(self, image):
+        patches = []
+        _, h, w = image.shape
+        for i in range(0, h - self.patch_size + 1, self.stride):
+            for j in range(0, w - self.patch_size + 1, self.stride):
+                patch = image[:, i:i+self.patch_size, j:j+self.patch_size]
+                patches.append(patch)
+        return patches
+
     def __len__(self):
         return len(self.dataPairs)
     
@@ -66,7 +78,10 @@ class TrainableDataset(Dataset):
             original_image = self.transform(original_image)
             processed_image = self.transform(processed_image)
 
-        return original_image, processed_image
+        orig_patches = self.extract_patches(original_image)
+        proc_patches = self.extract_patches(processed_image)
+
+        return orig_patches, proc_patches
 
 
 # get_model_name adapted from APS360 Lab 2
@@ -104,15 +119,24 @@ def saveBatchOutput(inputTensor: torch.Tensor, path: str, fileNames: str, epoch:
         torchvision.utils.save_image(img, os.path.join(path, name))
         print("Saved " + name)
 
-def collate_fn(batch):
-    max_height = max(max(orig.shape[1], proc.shape[1]) for orig, proc in batch)
-    max_width = max(max(orig.shape[2], proc.shape[2]) for orig, proc in batch)
-    pad_batch_orig = [
-      torchvision.transforms.functional.pad(orig, (0, 0, max_width - orig.shape[2], max_height - orig.shape[1])) for orig, _ in batch]
-    pad_batch_proc = [
-      torchvision.transforms.functional.pad(proc, (0, 0, max_width - proc.shape[2], max_height - proc.shape[1])) for _, proc in batch]
+#def collate_fn(batch):
+#    max_height = max(max(orig.shape[1], proc.shape[1]) for orig, proc in batch)
+#    max_width = max(max(orig.shape[2], proc.shape[2]) for orig, proc in batch)
+#    pad_batch_orig = [
+#      torchvision.transforms.functional.pad(orig, (0, 0, max_width - orig.shape[2], max_height - orig.shape[1])) for orig, _ in batch]
+#    pad_batch_proc = [
+#      torchvision.transforms.functional.pad(proc, (0, 0, max_width - proc.shape[2], max_height - proc.shape[1])) for _, proc in batch]
    
-    return torch.stack(pad_batch_orig), torch.stack(pad_batch_proc)
+#    return torch.stack(pad_batch_orig), torch.stack(pad_batch_proc)
+
+def collate_fn(batch):
+    orig_patches = []
+    proc_patches = []
+    for orig_list, proc_list in batch:
+        orig_patches.extend(orig_list)
+        proc_patches.extend(proc_list)
+
+    return torch.stack(orig_patches), torch.stack(proc_patches)
 
 '''
 ===============================================================================================
@@ -281,21 +305,21 @@ if __name__ == "__main__":
         # Load datasets from pre-split directories
 
 
-    train_dataset = TrainableDataset("Dataset/train", [""], transform)
+    train_dataset = TrainableDataset("/content/extracted_folder/dataset/train", [""], transform)
     train_dataset.generateDatapairs()
 
         # Reduce size to 50%
     half_size = len(train_dataset) // 2
     train_dataset, _ = random_split(train_dataset, [half_size, len(train_dataset) - half_size])
 
-    val_dataset = TrainableDataset("Dataset/validation", [""], transform)
+    val_dataset = TrainableDataset("/content/extracted_folder/dataset/validation", [""], transform)
     val_dataset.generateDatapairs()
 
     # Reduce size to 50%
     half_size = len(val_dataset) // 2
     val_dataset, _ = random_split(val_dataset, [half_size, len(val_dataset) - half_size])
 
-    test_dataset = TrainableDataset("Dataset/test", [""], transform)
+    test_dataset = TrainableDataset("/content/extracted_folder/dataset/test", [""], transform)
     test_dataset.generateDatapairs()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
