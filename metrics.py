@@ -64,14 +64,13 @@ def calculate_ssim(img1: np.ndarray, img2: np.ndarray) -> float:
 
 if __name__ == '__main__':
     # Example usage using input images
-    img1_path = "/Users/noohadnan/Desktop/APS360/APS360-SISR/Model/outputs/epoch_39_data/original/origepoch39_image0.jpg"  
-    pil_image1 = Image.open(img1_path).convert('L')  
+    img1_path = "./Model/outputs/epoch_39_data/original/origepoch39_image0.jpg"  
+    pil_image1 = Image.open(img1_path).convert('RGB')  
     img1np = np.array(pil_image1)
-
     img1 = img1np.astype(np.float32) / 255.0
-    
-    img2_path = "output_images/upscaled_image.jpg"
-    pil_image2 = Image.open(img2_path).convert('L')
+   
+    img2_path = "./Model/outputs/epoch_39_data/output/outputepoch39_image0.jpg"
+    pil_image2 = Image.open(img2_path).convert('RGB')
     img2np = np.array(pil_image2)    
 
     img2 = img2np.astype(np.float32) / 255.0

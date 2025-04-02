@@ -291,7 +291,7 @@ if __name__ == "__main__":
         # Load datasets from pre-split directories
 
 
-    train_dataset = TrainableDataset("/content/extracted_folder/dataset/train", [""], transform)
+    train_dataset = TrainableDataset("D:/dataset/train", [""], transform)
     train_dataset.generateDatapairs()
 
         # Reduce size to 50%
@@ -299,14 +299,14 @@ if __name__ == "__main__":
     print(half_size)
     train_dataset, _ = random_split(train_dataset, [half_size, len(train_dataset) - half_size])
 
-    val_dataset = TrainableDataset("/content/extracted_folder/dataset/validation", [""], transform)
+    val_dataset = TrainableDataset("D:/dataset/validation", [""], transform)
     val_dataset.generateDatapairs()
 
     # Reduce size to 50%
     half_size = len(val_dataset) // 3
     val_dataset, _ = random_split(val_dataset, [half_size, len(val_dataset) - half_size])
 
-    test_dataset = TrainableDataset("/content/extracted_folder/dataset/test", [""], transform)
+    test_dataset = TrainableDataset("D:/dataset/test", [""], transform)
     test_dataset.generateDatapairs()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
