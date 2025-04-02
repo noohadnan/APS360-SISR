@@ -6,7 +6,6 @@ import os
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Define the SISR model exactly as in your training file
 class SISR(nn.Module):
     def __init__(self):
         super(SISR, self).__init__()
@@ -16,12 +15,10 @@ class SISR(nn.Module):
         self.conv3 = nn.Conv2d(32, 3, 5, padding=2)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))  # Patch extraction and representation
-        x = F.relu(self.conv2(x))  # Non-linear mapping
-        x = self.conv3(x)          # Reconstruction
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x)) 
+        x = self.conv3(x)          
         return x
-
-# Unnormalize image: inverse of Normalize(mean=0.5, std=0.5)
 def unnormalize_image(img):
     return img * 0.5 + 0.5
 
@@ -34,7 +31,7 @@ def load_image(image_path):
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])
     img = transform(img)
-    img = img.unsqueeze(0)  # Add batch dimension
+    img = img.unsqueeze(0)
     return img
 
 def save_image(tensor, output_path):
@@ -49,26 +46,22 @@ def save_image(tensor, output_path):
 def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Instantiate the model and load checkpoint
     model = SISR().to(device)
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model.load_state_dict(checkpoint)
     model.eval()
 
-    # Load and process the input image
     input_tensor = load_image(args.input).to(device)
 
-    # Run inference
     with torch.no_grad():
         output_tensor = model(input_tensor)
 
-    # Save the deblurred output image
     save_image(output_tensor, args.output)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deblur an image using the trained SISR model")
     parser.add_argument('--checkpoint', type=str,
-                        default="/Users/jamesaliev/APS360-SISR/Model/model_savepoint/model_SISR_bs8_lr0.005_epoch39",
+                        default="directory_of_model_checkpoint",
                         help="Path to the SISR model checkpoint")
     parser.add_argument('--input', type=str, required=True,
                         help="Path to the input .jpg image")
