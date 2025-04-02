@@ -103,7 +103,7 @@ def depixelate_image(image, lanczos_scale=2.0, a=3):
 
 if __name__ == "__main__":
     input_image = "procepoch39_image0.jpg"  # Change to your desired image filename
-    mode = "no"  # Options: "none", "gaussian", "perlin", "both"
+    mode = "none"  # Options: "none", "gaussian", "perlin", "both"
     
     # --- Pixelation Stage ---
     # Process the image using your pixelation function (blurring + resolution loss)

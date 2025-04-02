@@ -4,7 +4,8 @@ from Model.SISR import enableCuda, SISR, saveBatchOutput, TrainableDataset, coll
 import torch
 import PIL
 import PIL.Image
-from metrics import calculate_psnr, calculate_ssim
+import torchvision.transforms.functional as TF
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from torch.utils.data import DataLoader, random_split
 import numpy as np
 import torch.nn.functional as F
@@ -60,6 +61,10 @@ if __name__ == "__main__":
   runningPSNR = 0
   runningBicubicSSIM = 0
   runningBicubicPSNR = 0
+  runningLanczosPSNR = 0
+  runningLanczosSSIM = 0
+  runningNearestPSNR = 0
+  runningNearestSSIM = 0
 
   numIters = len(test_dataset)
 
@@ -88,15 +93,34 @@ if __name__ == "__main__":
         bicubic = np.transpose(bicubic[0], (1, 2, 0))
 
 
-        psnr = calculate_psnr(output, orig)
-        ssim = calculate_ssim(output, orig)
-        bicubicPSNR = calculate_psnr(bicubic, orig)
-        bicubicSSIM = calculate_ssim(bicubic, orig)
+        psnr = peak_signal_noise_ratio(orig, output, data_range=orig.max() - orig.min())
+        ssim = structural_similarity(orig, output, channel_axis=-1, data_range=orig.max() - orig.min())
+        bicubicPSNR = peak_signal_noise_ratio(orig, bicubic, data_range=orig.max() - orig.min())
+        bicubicSSIM = structural_similarity(orig, bicubic, channel_axis=-1, data_range=orig.max() - orig.min())
 
         runningPSNR += psnr
         runningSSIM += ssim
         runningBicubicPSNR += bicubicPSNR
         runningBicubicSSIM += bicubicSSIM
+
+        # Lanczos baseline using PIL
+        pil_image = TF.to_pil_image(procNorm[0])
+        lanczos_img = pil_image.resize((w, h), resample=PIL.Image.LANCZOS)
+        lanczos = np.array(lanczos_img) /255
+        lanczosPSNR = peak_signal_noise_ratio(orig, lanczos, data_range=orig.max() - orig.min())
+        lanczosSSIM = structural_similarity(orig, lanczos, channel_axis=-1, data_range=orig.max() - orig.min())
+        runningLanczosPSNR += lanczosPSNR
+        runningLanczosSSIM += lanczosSSIM
+
+        # Nearest neighbor baseline using PIL
+        nearest = F.interpolate(procNorm, size=(h, w), mode='area')
+        nearest = nearest.cpu().numpy()
+        nearest = np.transpose(nearest[0], (1, 2, 0))
+
+        nearestPSNR = peak_signal_noise_ratio(orig, nearest, data_range=orig.max() - orig.min())
+        nearestSSIM = structural_similarity(orig, nearest, channel_axis=-1, data_range=orig.max() - orig.min())
+        runningNearestPSNR += nearestPSNR
+        runningNearestSSIM += nearestSSIM
 
         if (i % 100 == 0):
            print(i)
@@ -108,9 +132,17 @@ if __name__ == "__main__":
   averageSSIM = runningSSIM / numIters
   averageBicubicPSNR = runningBicubicPSNR / numIters
   averageBicubicSSIM = runningBicubicSSIM / numIters
+  averageLanczosPSNR = runningLanczosPSNR / numIters
+  averageLanczosSSIM = runningLanczosSSIM / numIters
+  averageNearestPSNR = runningNearestPSNR / numIters
+  averageNearestSSIM = runningNearestSSIM / numIters
 
   print(f"Average PSNR = {averagePSNR}")
   print(f"Average SSIM = {averageSSIM}")
   print(f"Average Bicubic PSNR = {averageBicubicPSNR}")
   print(f"Average Bicubic SSIM = {averageBicubicSSIM}")
+  print(f"Average Lanczos PSNR = {averageLanczosPSNR}")
+  print(f"Average Lanczos SSIM = {averageLanczosSSIM}")
+  print(f"Average Nearest PSNR = {averageNearestPSNR}")
+  print(f"Average Nearest SSIM = {averageNearestSSIM}")
   exit(0)
