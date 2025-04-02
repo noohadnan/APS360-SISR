@@ -1,5 +1,5 @@
 from torchvision import datasets, transforms
-from Archive.SISR import enableCuda, SISR, get_model_name, plot_training_curve, saveBatchOutput
+from SISR import enableCuda, SISR, get_model_name, plot_training_curve, saveBatchOutput
 import torch
 import PIL
 import PIL.Image
@@ -21,7 +21,7 @@ bestModelPath = get_model_name( name=bestModel.name,
                                 batch_size=best_Model_batch_size,
                                 learning_rate=best_Model_learning_rate,
                                 epoch=best_Model_epoch)
-state = torch.load(bestModelPath)
+state = torch.load(bestModelPath, map_location = torch.device('cpu'))
 bestModel.load_state_dict(state)
 
 # plot_training_curve(bestModelPath)
