@@ -39,7 +39,7 @@ if __name__ == '__main__':
     try:
         fn = args[0]
     except:
-        fn = '/Users/noohadnan/Desktop/APS360/APS360-SISR/data_images/procepoch39_image0.jpg'
+        fn = 'Model/outputs/epoch_39_data/original/origepoch39_image0.jpg'
 
     win = 'deconvolution'
 

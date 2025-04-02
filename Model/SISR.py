@@ -26,6 +26,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import PIL
 
+import argparse
+
 # PyTorch TensorBoard support
 from torch.utils.tensorboard import SummaryWriter
 
@@ -74,7 +76,7 @@ def get_model_name(name, batch_size, learning_rate, epoch):
     path = "./model_savepoint/model_{0}_bs{1}_lr{2}_epoch{3}".format(name,
                                                    batch_size,
                                                    learning_rate,
-                                                   epoch)
+                                                   epoch+40)
     return path
 
 # plot_training_curve adapted from APS360 Lab 2
@@ -107,7 +109,7 @@ def saveBatchOutput(inputTensor: torch.Tensor, path: str, fileNames: str, epoch:
         img.cpu()
         img = unnormalize_image(img)
         img = torch.clamp(img, 0, 1)
-        name = fileNames + f"epoch{epoch}_image{i}.jpg"
+        name = fileNames + f"epoch{epoch}_image{i+40}.jpg"
         torchvision.utils.save_image(img, os.path.join(path, name))
         print("Saved " + name)
 
@@ -266,6 +268,12 @@ def trainNet(model, data, validationData, batchSize=32, learningRate=0.005, numE
 ===============================================================================================
 '''
 if __name__ == "__main__":
+
+    # Set up the command line argument parser
+    parser = argparse.ArgumentParser(description="Train a SISR model")
+    parser.add_argument("--checkpoint", type=str, default=None, help="Path to a checkpoint file to resume training")
+    args = parser.parse_args()
+
     transform = transforms.Compose([
                 transforms.Resize((1024, 1024)),
                 transforms.ToTensor(),
@@ -321,12 +329,18 @@ if __name__ == "__main__":
     else:
         print("CUDA not available\n")
 
+
+    # Load the model from a checkpoint if provided
+    if args.checkpoint:
+        checkpoint = torch.load(args.checkpoint, map_location=device)
+        SISRModel.load_state_dict(checkpoint)
+
     trainNet(
         SISRModel, 
         train_dataset, 
         val_dataset,
         batchSize=8,
-        learningRate=5e-3,
+        learningRate=1e-2,
         numEpochs=40,
         getVal=True,
         saveCheckpoints=True

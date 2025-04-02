@@ -26,7 +26,7 @@ def load_image(image_path):
     """Load and preprocess image with same transforms as training."""
     img = Image.open(image_path).convert('RGB')
     transform = transforms.Compose([
-        transforms.Resize((1024, 1024)),
+    #    transforms.Resize((1024, 1024)),
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])

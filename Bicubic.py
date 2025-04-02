@@ -29,7 +29,7 @@ def bicubic_interpolate_2d(image: torch.Tensor, new_height: int, new_width: int)
 
 if __name__ == '__main__':
     # --- Load the high-resolution image ---
-    img_path = "data_images/procepoch39_image0.jpg"  
+    img_path = "Model/outputs/epoch_39_data/original/origepoch39_image0.jpg"  
     pil_image = Image.open(img_path).convert('L')  
     original_np = np.array(pil_image)
     
@@ -52,8 +52,8 @@ if __name__ == '__main__':
     # --- Compute PSNR and SSIM with the original high-resolution image ---
     # Ensure both images are in [0,1]
     original_norm = original_np.astype(np.float32) / 255.0
-    psnr_value = calculate_psnr(original_norm, upscaled_np)
-    ssim_value = calculate_ssim(original_norm, upscaled_np)
+    psnr_value = calculate_psnr(low_res_np, upscaled_np)
+    ssim_value = calculate_ssim(low_res_np, upscaled_np)
 
     # save the image
     upscaled_pil = Image.fromarray((upscaled_np * 255).astype(np.uint8))
