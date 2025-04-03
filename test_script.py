@@ -82,6 +82,10 @@ if __name__ == "__main__":
 
         output = bestModel(proc)
 
+        outToSave = (output)
+        origToSave = (orig)
+        procToSave = (proc)
+
         outputNorm = unnormalize_image(output).cpu().numpy()
         origNorm = unnormalize_image(orig).cpu().numpy()
         procNorm = unnormalize_image(proc).cpu()
@@ -97,6 +101,12 @@ if __name__ == "__main__":
         ssim = structural_similarity(orig, output, channel_axis=-1, data_range=orig.max() - orig.min())
         bicubicPSNR = peak_signal_noise_ratio(orig, bicubic, data_range=orig.max() - orig.min())
         bicubicSSIM = structural_similarity(orig, bicubic, channel_axis=-1, data_range=orig.max() - orig.min())
+        
+        if (ssim > 0.9):
+            saveBatchOutput(outToSave, f"testRuns/output", "output", i)
+            saveBatchOutput(origToSave, f"testRuns/original", "orig", i)
+            saveBatchOutput(procToSave, f"testRuns/processed", "proc", i)
+        #     break
 
         runningPSNR += psnr
         runningSSIM += ssim
@@ -122,21 +132,20 @@ if __name__ == "__main__":
         runningNearestPSNR += nearestPSNR
         runningNearestSSIM += nearestSSIM
 
-        if (i % 100 == 0):
+        if (i % 20 == 0):
            print(i)
         i+=1
 
-        # print(psnr)
-        # print(ssim)
-  averagePSNR = runningPSNR / numIters
-  averageSSIM = runningSSIM / numIters
-  averageBicubicPSNR = runningBicubicPSNR / numIters
-  averageBicubicSSIM = runningBicubicSSIM / numIters
-  averageLanczosPSNR = runningLanczosPSNR / numIters
-  averageLanczosSSIM = runningLanczosSSIM / numIters
-  averageNearestPSNR = runningNearestPSNR / numIters
-  averageNearestSSIM = runningNearestSSIM / numIters
+  averagePSNR = runningPSNR / i
+  averageSSIM = runningSSIM / i
+  averageBicubicPSNR = runningBicubicPSNR / i
+  averageBicubicSSIM = runningBicubicSSIM / i 
+  averageLanczosPSNR = runningLanczosPSNR / i
+  averageLanczosSSIM = runningLanczosSSIM / i
+  averageNearestPSNR = runningNearestPSNR / i
+  averageNearestSSIM = runningNearestSSIM / i
 
+  print(f"{numIters - i} outliers dropped") 
   print(f"Average PSNR = {averagePSNR}")
   print(f"Average SSIM = {averageSSIM}")
   print(f"Average Bicubic PSNR = {averageBicubicPSNR}")
